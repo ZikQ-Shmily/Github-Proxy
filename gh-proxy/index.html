@@ -1,0 +1,399 @@
+
+		<!DOCTYPE html>
+		<html lang="zh-CN">
+		<head>
+			<title>GitHub 文件加速</title>
+			<meta charset="UTF-8">
+			<link rel="shortcut icon" href="favicon.ico">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<style>
+				:root {
+					--accent: #0071e3;
+					--accent-hover: #0077ed;
+					--text-primary: #1d1d1f;
+					--text-secondary: #6e6e73;
+					--text-tertiary: #86868b;
+					--surface: rgba(255, 255, 255, 0.72);
+					--surface-strong: rgba(255, 255, 255, 0.85);
+					--border: rgba(0, 0, 0, 0.08);
+					--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
+					--shadow-md: 0 4px 24px rgba(0, 0, 0, 0.06), 0 12px 40px rgba(0, 0, 0, 0.04);
+					--shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08), 0 20px 60px rgba(0, 0, 0, 0.06);
+				}
+
+				* {
+					box-sizing: border-box;
+					margin: 0;
+					padding: 0;
+				}
+
+				html, body {
+					height: 100%;
+				}
+
+				body {
+					font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+					-webkit-font-smoothing: antialiased;
+					-moz-osx-font-smoothing: grayscale;
+					color: var(--text-primary);
+					background: linear-gradient(180deg, #fbfbfd 0%, #f5f5f7 50%, #ffffff 100%);
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					padding: 16px 20px;
+					position: relative;
+					overflow: hidden;
+				}
+
+				/* 背景光晕：模拟苹果官网柔和的高光氛围 */
+				body::before,
+				body::after {
+					content: "";
+					position: fixed;
+					border-radius: 50%;
+					filter: blur(80px);
+					z-index: 0;
+					pointer-events: none;
+				}
+
+				body::before {
+					top: -120px;
+					left: -120px;
+					width: 480px;
+					height: 480px;
+					background: radial-gradient(circle, rgba(0, 113, 227, 0.18), transparent 70%);
+				}
+
+				body::after {
+					bottom: -160px;
+					right: -160px;
+					width: 520px;
+					height: 520px;
+					background: radial-gradient(circle, rgba(175, 82, 222, 0.14), transparent 70%);
+				}
+
+				.container {
+					position: relative;
+					z-index: 1;
+					width: 100%;
+					max-width: 820px;
+					padding: 20px 20px;
+					text-align: center;
+				}
+
+				.logo {
+					display: inline-block;
+					margin-bottom: 1.5rem;
+					transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+				}
+
+				.logo svg {
+					fill: #1d1d1f;
+				}
+
+				.logo:hover {
+					transform: scale(1.06);
+				}
+
+				.title {
+					font-size: clamp(2rem, 4vw, 3rem);
+					font-weight: 600;
+					letter-spacing: -0.02em;
+					line-height: 1.1;
+					margin-bottom: 0.6rem;
+					background: linear-gradient(180deg, #1d1d1f 0%, #424245 100%);
+					-webkit-background-clip: text;
+					-webkit-text-fill-color: transparent;
+					background-clip: text;
+				}
+
+				.subtitle {
+					color: var(--text-secondary);
+					font-size: 1.05rem;
+					margin-bottom: 2rem;
+					letter-spacing: -0.01em;
+				}
+
+				.search-container {
+					position: relative;
+					max-width: 640px;
+					margin: 2rem auto;
+				}
+
+				.search-input {
+					width: 100%;
+					height: 56px;
+					padding: 0 64px 0 24px;
+					font-size: 1rem;
+					font-family: inherit;
+					color: var(--text-primary);
+					background: var(--surface-strong);
+					backdrop-filter: saturate(180%) blur(20px);
+					-webkit-backdrop-filter: saturate(180%) blur(20px);
+					border: 1px solid var(--border);
+					border-radius: 980px;
+					box-shadow: var(--shadow-sm);
+					transition: all 0.25s ease;
+				}
+
+				.search-input::placeholder {
+					color: var(--text-tertiary);
+				}
+
+				.search-input:hover {
+					box-shadow: var(--shadow-md);
+				}
+
+				.search-input:focus {
+					border-color: var(--accent);
+					background: #ffffff;
+					outline: none;
+					box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15), var(--shadow-md);
+				}
+
+				.search-button {
+					position: absolute;
+					right: 6px;
+					top: 50%;
+					transform: translateY(-50%);
+					width: 44px;
+					height: 44px;
+					border: none;
+					border-radius: 50%;
+					background: var(--accent);
+					color: white;
+					cursor: pointer;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+					box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+				}
+
+				.search-button:hover {
+					background: var(--accent-hover);
+					transform: translateY(-50%) scale(1.06);
+					box-shadow: 0 4px 14px rgba(0, 113, 227, 0.4);
+				}
+
+				.search-button:active {
+					transform: translateY(-50%) scale(0.98);
+				}
+
+				/* 玻璃卡片基础样式 */
+				.glass-card {
+					background: var(--surface);
+					backdrop-filter: saturate(180%) blur(24px);
+					-webkit-backdrop-filter: saturate(180%) blur(24px);
+					border: 1px solid rgba(255, 255, 255, 0.6);
+					border-radius: 18px;
+					box-shadow: var(--shadow-md);
+				}
+
+				.tips {
+					margin-top: 2rem;
+					padding: 1.4rem 1.6rem;
+					color: var(--text-secondary);
+					line-height: 1.7;
+					text-align: left;
+					font-size: 0.95rem;
+				}
+
+				.tips p {
+					margin: 0.4rem 0;
+				}
+
+				.tips a {
+					color: var(--accent);
+					text-decoration: none;
+					transition: color 0.2s ease;
+				}
+
+				.tips a:hover {
+					color: var(--accent-hover);
+					text-decoration: underline;
+				}
+
+				.example {
+					margin-top: 1.5rem;
+					padding: 1.8rem;
+					text-align: left;
+					overflow-wrap: break-word;
+					word-wrap: break-word;
+				}
+
+				.example-title {
+					color: var(--text-primary);
+					margin-bottom: 1rem;
+					font-size: 1rem;
+					font-weight: 600;
+					letter-spacing: -0.01em;
+					padding-bottom: 0.8rem;
+					border-bottom: 1px solid var(--border);
+				}
+
+				.example p {
+					margin: 0.7rem 0;
+					font-family: "SF Mono", ui-monospace, "Menlo", monospace;
+					font-size: 0.875rem;
+					color: var(--text-secondary);
+					line-height: 1.5;
+					word-break: break-all;
+				}
+
+				.footer {
+					margin-top: 2rem;
+					font-size: 0.85rem;
+					color: var(--text-tertiary);
+				}
+
+				.footer a {
+					color: var(--accent);
+					text-decoration: none;
+				}
+
+				.footer a:hover {
+					text-decoration: underline;
+				}
+
+				@media (max-width: 640px) {
+					html, body {
+						height: auto;
+					}
+
+					body {
+						align-items: flex-start;
+						overflow: visible;
+						overflow-x: hidden;
+						padding: 24px 16px 32px;
+					}
+
+					.container {
+						padding: 8px 4px;
+					}
+
+					.logo svg {
+						width: 56px;
+						height: 56px;
+					}
+
+					.logo {
+						margin-bottom: 1rem;
+					}
+
+					.title {
+						font-size: 1.75rem;
+					}
+
+					.subtitle {
+						font-size: 0.95rem;
+						margin-bottom: 1.4rem;
+					}
+
+					.search-container {
+						margin: 1.4rem auto;
+					}
+
+					.search-input {
+						height: 50px;
+						font-size: 16px;
+						padding: 0 56px 0 20px;
+					}
+
+					.search-button {
+						width: 40px;
+						height: 40px;
+					}
+
+					.example {
+						margin-top: 1.2rem;
+						padding: 1.2rem;
+					}
+
+					.example p {
+						font-size: 0.78rem;
+						margin: 0.5rem 0;
+					}
+
+					.footer {
+						margin-top: 1.5rem;
+						font-size: 0.8rem;
+						padding: 0 8px;
+						line-height: 1.6;
+					}
+
+					/* 移动端缩小光晕避免抢眼 */
+					body::before {
+						width: 280px;
+						height: 280px;
+						top: -80px;
+						left: -80px;
+					}
+
+					body::after {
+						width: 320px;
+						height: 320px;
+						bottom: -100px;
+						right: -100px;
+					}
+				}
+
+				@media (prefers-color-scheme: dark) {
+					/* 保持浅色玻璃风格，不跟随系统切深色 */
+				}
+			</style>
+		</head>
+		<body>
+			<div class="container">
+				<div class="logo">
+					<a href="https://github.com/ZikQ-Shmily/Github-Proxy" target="_blank" aria-label="GitHub">
+						<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 98 96">
+							<path fill-rule="evenodd" clip-rule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z"/>
+						</svg>
+					</a>
+				</div>
+				<h1 class="title">GitHub 文件及 API 加速</h1>
+				<p class="subtitle">轻快、稳定、贴心的 GitHub 资源代理</p>
+
+				<form onsubmit="toSubmit(event)" class="search-container">
+					<input
+						type="text"
+						class="search-input"
+						name="q"
+						placeholder="请输入 GitHub 文件或 API 链接"
+						pattern="^((https|http)://)?(github.com/.+?/.+?/(?:releases|archive|blob|raw|suites)|((?:raw|gist|api).(?:githubusercontent|github).com))/.+$"
+						required
+					>
+					<button type="submit" class="search-button" aria-label="加速">
+						<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+							<path d="M13 5l7 7-7 7M5 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</button>
+				</form>
+
+				<div class="example glass-card">
+					<div class="example-title">📃 合法输入示例</div>
+					<p>📄 分支源码：https://github.com/user/repo/archive/main.zip</p>
+					<p>📁 release 源码：https://github.com/user/repo/archive/v1.0.0.tar.gz</p>
+					<p>📂 release 文件：https://github.com/user/repo/releases/download/v1.0.0/example.zip</p>
+					<p>💾 commit 文件：https://github.com/user/repo/blob/abc123/filename</p>
+					<p>🖨️ gist：https://gist.githubusercontent.com/user/abc123/raw/script.py</p>
+					<p>☁️ api：https://api.github.com/repos/user/repo</p>
+				</div>
+
+				<p class="footer">
+					由 <a href="https://github.com/ZikQ-Shmily/Github-Proxy" target="_blank">GitHub-Proxy</a> 提供技术支持，运行于 <a href="https://workers.cloudflare.com/" target="_blank">Cloudflare Workers</a>。
+				</p>
+			</div>
+
+			<script>
+				function toSubmit(e) {
+					e.preventDefault();
+					const input = document.getElementsByName('q')[0];
+					const baseUrl = location.href.substr(0, location.href.lastIndexOf('/') + 1);
+					window.open(baseUrl + input.value);
+				}
+			</script>
+		</body>
+		</html>
+	
